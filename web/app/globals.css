@@ -309,7 +309,13 @@ button { font-family: inherit; }
   margin-left: 4px;
   vertical-align: 3px;
 }
-.topnav-items { display: flex; gap: 4px; }
+.topnav-items {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.topnav-items::-webkit-scrollbar { display: none; }
 .topnav-item {
   background: transparent;
   border: 0;
@@ -768,6 +774,16 @@ button { font-family: inherit; }
 .case .ask-resona p { margin: 0; font-size: 15px; color: var(--fg-1); }
 .case .ask-resona p small { display: block; color: var(--fg-2); font-size: 13px; margin-top: 2px; }
 .case .ask-resona .btn { margin-left: auto; }
+
+/* FAQ — each Q/A renders as a paragraph from the markdown; give them
+   visible separation and accent the bold Q line. */
+.case .faq-body p { margin: 0 0 22px; }
+.case .faq-body p strong {
+  display: block;
+  font-weight: var(--w-semibold);
+  color: var(--accent);
+  margin-bottom: 2px;
+}
 
 /* ============================================================================
    Tech stack

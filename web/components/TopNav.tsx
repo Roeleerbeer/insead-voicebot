@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import Icon from "./ui/Icon";
 import StatusPill, { type StatusState } from "./ui/StatusPill";
 
-export type Route = "voice" | "transcript" | "case" | "tech";
+export type Route =
+  | "voice"
+  | "transcript"
+  | "case"
+  | "tech"
+  | "about"
+  | "faq";
 
 type Props = {
   current: Route;
@@ -18,6 +24,8 @@ const ITEMS: { id: Route; label: string }[] = [
   { id: "voice", label: "Voice" },
   { id: "case",  label: "Business case" },
   { id: "tech",  label: "Tech stack" },
+  { id: "about", label: "About" },
+  { id: "faq",   label: "FAQ" },
 ];
 
 export default function TopNav({ current, onNavigate, status }: Props) {

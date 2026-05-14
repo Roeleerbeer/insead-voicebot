@@ -6,6 +6,8 @@ import VoiceMode from "./VoiceMode";
 import Transcript from "./Transcript";
 import BusinessCase from "./BusinessCase";
 import TechStack from "./TechStack";
+import About from "./About";
+import FAQ from "./FAQ";
 import { useVoiceSession } from "./useVoiceSession";
 import type { StatusState } from "./ui/StatusPill";
 
@@ -25,9 +27,17 @@ function detectUnsupported(): string | null {
 
 type Props = {
   businessCaseHtml: string;
+  courseHtml: string;
+  teamHtml: string;
+  faqHtml: string;
 };
 
-export default function App({ businessCaseHtml }: Props) {
+export default function App({
+  businessCaseHtml,
+  courseHtml,
+  teamHtml,
+  faqHtml,
+}: Props) {
   const [route, setRoute] = useState<Route>("voice");
   const [unsupported, setUnsupported] = useState<string | null>(null);
   const session = useVoiceSession();
@@ -84,6 +94,16 @@ export default function App({ businessCaseHtml }: Props) {
         </div>
         <div className={`screen ${route === "tech" ? "is-active" : ""}`}>
           <TechStack onAskResona={askResona} />
+        </div>
+        <div className={`screen ${route === "about" ? "is-active" : ""}`}>
+          <About
+            courseHtml={courseHtml}
+            teamHtml={teamHtml}
+            onAskResona={askResona}
+          />
+        </div>
+        <div className={`screen ${route === "faq" ? "is-active" : ""}`}>
+          <FAQ html={faqHtml} onAskResona={askResona} />
         </div>
       </div>
     </div>
