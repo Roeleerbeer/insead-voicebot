@@ -15,6 +15,7 @@ type Props = {
   elapsedSec: number;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  errorMessage?: string;
   onStart: () => void;
   onEnd: () => void;
 };
@@ -46,6 +47,7 @@ export default function VoiceMode({
   elapsedSec,
   localStream,
   remoteStream,
+  errorMessage,
   onStart,
   onEnd,
 }: Props) {
@@ -91,7 +93,12 @@ export default function VoiceMode({
             <div className="label">{STATE_LABEL.idle}</div>
           )}
           {phase === "connecting" && (
-            <div className="label">Connecting…</div>
+            <div className="label">Connecting...</div>
+          )}
+          {phase === "error" && (
+            <div className="label" style={{ color: "var(--error)" }}>
+              {errorMessage ?? "Something went wrong"}
+            </div>
           )}
         </div>
 

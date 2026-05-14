@@ -1,0 +1,34 @@
+# Append this block to /root/infra/Caddyfile on the VPS, then reload Caddy.
+# Two subdomains: the Next.js app and the LiveKit WSS signaling.
+# Direct UDP/TCP media on :7881 and :7882 bypass Caddy entirely (open them
+# at the firewall — see deploy/bootstrap.md).
+
+insead-voicebot.roelconijn.nl {
+    encode zstd gzip
+
+    # Keep the demo out of search indexes.
+    header X-Robots-Tag "noindex, nofollow, noarchive"
+
+    respond /healthz 200
+
+    reverse_proxy insead-voicebot-web:3000 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Real-IP {remote_host}
+    }
+}
+
+livekit.insead-voicebot.roelconijn.nl {
+    encode zstd gzip
+
+    # LiveKit signaling: WebSocket upgrade + Twirp REST. The reverse_proxy
+    # handles the Upgrade header automatically.
+    reverse_proxy insead-voicebot-livekit:7880 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Real-IP {remote_host}
+        # WebSocket sessions are long-lived; lift timeouts.
+        transport http {
+            read_timeout 0
+            write_timeout 0
+        }
+    }
+}

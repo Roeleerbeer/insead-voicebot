@@ -104,6 +104,15 @@ export function useVoiceSession(): VoiceSession {
 
     try {
       const res = await fetch("/api/token", { method: "POST" });
+      if (res.status === 503) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          reason?: string;
+        };
+        setErrorMessage(body.error ?? "Demo is at capacity.");
+        setPhase("error");
+        return;
+      }
       if (!res.ok) throw new Error(`token endpoint: ${res.status}`);
       const { token, url } = (await res.json()) as {
         room: string;

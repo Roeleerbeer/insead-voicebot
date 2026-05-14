@@ -1,0 +1,84 @@
+# Production stack for insead-voicebot.roelconijn.nl.
+# See deploy/bootstrap.md for the one-time setup + deploy command.
+#
+#   docker compose -f compose.prod.yml \
+#     --env-file /etc/insead-voicebot/prod.env up -d --build
+
+x-shared-livekit-auth: &shared-livekit-auth
+  LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+  LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+
+services:
+  # Self-hosted LiveKit server. WSS signaling reaches it via the shared Caddy
+  # on subdomain livekit.insead-voicebot.roelconijn.nl. UDP/TCP media reaches
+  # it via the host's :7881 (tcp) and :7882 (udp) ports — those must be open
+  # in the VPS firewall.
+  livekit:
+    image: livekit/livekit-server:v1.11.0
+    container_name: insead-voicebot-livekit
+    restart: unless-stopped
+    command: ["--config", "/livekit.yaml"]
+    environment:
+      # LIVEKIT_KEYS uses the "key: secret" yaml-fragment form expected by
+      # livekit-server. Quotes matter so the colon isn't parsed by compose.
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    ports:
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+    volumes:
+      - ./deploy/livekit.yaml:/livekit.yaml:ro
+    networks:
+      - default
+      - web  # Caddy reaches it on :7880 over this shared network
+
+  web:
+    container_name: insead-voicebot-web
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *shared-livekit-auth
+      # Public WSS URL the browser connects to (via Caddy).
+      NEXT_PUBLIC_LIVEKIT_URL: ${PUBLIC_LIVEKIT_URL}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      MAX_MONTHLY_COST_USD: ${MAX_MONTHLY_COST_USD:-20}
+      MAX_DAILY_COST_USD: ${MAX_DAILY_COST_USD:-5}
+      MAX_IP_MINUTES_PER_HOUR: ${MAX_IP_MINUTES_PER_HOUR:-8}
+      MAX_CONCURRENT_SESSIONS: ${MAX_CONCURRENT_SESSIONS:-5}
+    expose:
+      - "3000"
+    volumes:
+      - ./data:/data  # shared SQLite usage counters + (later) transcripts
+    depends_on:
+      - livekit
+    networks:
+      - default
+      - web
+
+  agent:
+    container_name: insead-voicebot-agent
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *shared-livekit-auth
+      # Internal docker hostname — bypasses Caddy / public DNS.
+      LIVEKIT_URL: ws://livekit:7880
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID}
+      MAX_SESSION_MINUTES: ${MAX_SESSION_MINUTES:-5}
+    volumes:
+      - ./data:/data
+    depends_on:
+      - livekit
+    networks:
+      - default
+
+networks:
+  default:
+  web:
+    external: true

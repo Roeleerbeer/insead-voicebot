@@ -18,6 +18,7 @@ from livekit.agents.voice.room_io import RoomOptions, TextOutputOptions
 from livekit.plugins import anthropic, deepgram, elevenlabs, silero
 
 from prompt import PROMPT_VERSION, SYSTEM_PROMPT
+from usage import record_session_end
 
 load_dotenv()
 logger = logging.getLogger("voicebot")
@@ -35,6 +36,13 @@ def prewarm(proc: JobProcess) -> None:
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     logger.info("agent joined room %s (prompt %s)", ctx.room.name, PROMPT_VERSION)
+
+    session_start_monotonic = time.monotonic()
+
+    async def _record_usage() -> None:
+        record_session_end(time.monotonic() - session_start_monotonic)
+
+    ctx.add_shutdown_callback(_record_usage)
 
     session = AgentSession(
         vad=ctx.proc.userdata.get("vad") or silero.VAD.load(),

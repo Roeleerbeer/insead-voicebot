@@ -11,6 +11,7 @@
   "dependencies": {
     "@livekit/components-react": "^2.9.0",
     "@livekit/components-styles": "^1.1.5",
+    "better-sqlite3": "^12.10.0",
     "livekit-client": "^2.7.0",
     "livekit-server-sdk": "^2.9.0",
     "marked": "^18.0.3",
@@ -19,9 +20,13 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3"]
   }
 }

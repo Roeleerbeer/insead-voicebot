@@ -79,6 +79,7 @@ export default function App({
             elapsedSec={session.elapsedSec}
             localStream={session.localStream}
             remoteStream={session.remoteStream}
+            errorMessage={session.errorMessage}
             onStart={session.start}
             onEnd={session.end}
           />

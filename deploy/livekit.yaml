@@ -1,0 +1,21 @@
+# LiveKit self-hosted production config.
+# Mounted into the livekit container at /livekit.yaml (see compose.prod.yml).
+
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  tcp_port: 7881
+  # Single multiplexed UDP port — keeps the firewall surface small.
+  udp_port: 7882
+  # Auto-detect the VPS external IP so ICE candidates advertise something
+  # reachable from the public internet, not the docker-internal address.
+  use_external_ip: true
+
+# Keys are injected at startup via the LIVEKIT_KEYS env var
+# (compose.prod.yml passes "apikey: apisecret"). Defining `keys:` here as
+# an empty map would override that, so leave it out.
+
+logging:
+  level: info
