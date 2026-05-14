@@ -1,10 +1,5 @@
-import VoiceSession from "@/components/VoiceSession";
+import App from "@/components/App";
 
 export default function Home() {
-  return (
-    <main>
-      <h1>INSEAD Voicebot</h1>
-      <VoiceSession />
-    </main>
-  );
+  return <App />;
 }
