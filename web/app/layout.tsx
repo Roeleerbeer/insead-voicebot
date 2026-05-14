@@ -46,7 +46,11 @@ const themeBoot = `try{var t=localStorage.getItem('insead-voicebot-theme')||'dar
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${zillaSlab.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${zillaSlab.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>

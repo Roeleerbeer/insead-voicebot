@@ -463,30 +463,15 @@ button { font-family: inherit; }
 /* ============================================================================
    Orb
    ============================================================================ */
-.orb-anim-idle      { animation: orb-breathe 2.6s var(--ease) infinite; }
-.orb-anim-listening { animation: orb-listen 0.7s var(--ease) infinite; filter: blur(0.4px); }
-.orb-anim-thinking  { animation: orb-think 1.8s var(--ease) infinite; }
-.orb-anim-speaking  { animation: orb-speak 0.9s var(--ease) infinite; }
+/* The orb's transform/scale is driven from JS (Orb.tsx rAF loop) so it can
+   suppress the breathing motion when real audio is flowing. CSS only adds a
+   subtle blur in the thinking state. Mini-orbs elsewhere still use orb-breathe. */
+.orb-anim-thinking { animation: orb-think 1.8s var(--ease) infinite; }
 
-@keyframes orb-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.06) } }
-@keyframes orb-listen {
-  0%   { transform: scale(0.94); }
-  25%  { transform: scale(1.18); }
-  50%  { transform: scale(1.02); }
-  75%  { transform: scale(1.12); }
-  100% { transform: scale(0.94); }
-}
+@keyframes orb-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.018) } }
 @keyframes orb-think {
-  0%, 100% { transform: scale(0.98); filter: blur(0.5px); }
-  50%      { transform: scale(1.04); filter: blur(1px); }
-}
-@keyframes orb-speak {
-  0%   { transform: scale(1.0); }
-  20%  { transform: scale(1.14); }
-  40%  { transform: scale(0.96); }
-  60%  { transform: scale(1.10); }
-  80%  { transform: scale(1.02); }
-  100% { transform: scale(1.0); }
+  0%, 100% { filter: blur(0.5px); }
+  50%      { filter: blur(1px); }
 }
 
 /* ============================================================================

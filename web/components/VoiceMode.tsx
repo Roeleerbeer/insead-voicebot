@@ -82,7 +82,6 @@ export default function VoiceMode({
           size={220}
           onClick={onOrbTap}
           amplitude={audio?.amplitude}
-          frequencyBands={audio?.bands}
         />
         <div className="voice-caption">
           {phase === "connected" && (
