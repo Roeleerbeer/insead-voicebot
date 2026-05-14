@@ -464,15 +464,10 @@ button { font-family: inherit; }
    Orb
    ============================================================================ */
 /* The orb's transform/scale is driven from JS (Orb.tsx rAF loop) so it can
-   suppress the breathing motion when real audio is flowing. CSS only adds a
-   subtle blur in the thinking state. Mini-orbs elsewhere still use orb-breathe. */
-.orb-anim-thinking { animation: orb-think 1.8s var(--ease) infinite; }
+   suppress the breathing motion when real audio is flowing.
+   Mini-orbs elsewhere still use orb-breathe. */
 
 @keyframes orb-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.018) } }
-@keyframes orb-think {
-  0%, 100% { filter: blur(0.5px); }
-  50%      { filter: blur(1px); }
-}
 
 /* ============================================================================
    Voice mode
