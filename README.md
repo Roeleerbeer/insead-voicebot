@@ -2,13 +2,17 @@
 
 Meta voicebot demo for an INSEAD course final presentation.
 
+Live at <https://insead-voicebot.roelconijn.nl>.
+
 Three pieces:
 
 - `web/` — Next.js frontend (browser mic + LiveKit room + transcript view)
 - `agent/` — Python LiveKit Agent worker (Deepgram STT → Claude Haiku 4.5 → ElevenLabs Flash TTS)
-- `livekit-server` — self-hosted WebRTC SFU (Windows: native binary in `.livekit/`; Linux/VPS: Docker via `docker-compose.dev.yml`)
+- `livekit-server` — self-hosted WebRTC SFU (Windows local dev: native binary in `.livekit/`; Linux/VPS: Docker — `docker-compose.dev.yml` for dev, `compose.prod.yml` for prod)
 
 PRDs live as GitHub issues with the `prd` label.
+
+For production deployment to the Hetzner VPS, see [`deploy/bootstrap.md`](deploy/bootstrap.md).
 
 ## Prerequisites
 
@@ -66,4 +70,10 @@ Default dev credentials are `devkey` / `secret`; they are baked into livekit-ser
 
 ## Transcript streaming
 
-The bot's transcript appears in the browser word-by-word in sync with the spoken audio (rather than dumping all at once or racing ahead of TTS). This is driven by LiveKit Agents' `TranscriptSynchronizer`, which paces text emission against ElevenLabs playback. The agent opts in explicitly via `RoomOptions(text_output=TextOutputOptions(sync_transcription=True))` in `agent/main.py` — that matches the LiveKit default but is set explicitly so the streaming behavior is locked in even if defaults change. On the web side, `web/components/VoiceSession.tsx` listens to `RoomEvent.TranscriptionReceived` and updates each segment in place by `id`, which is what enables the progressive reveal.
+The bot's transcript appears in the browser word-by-word in sync with the spoken audio (rather than dumping all at once or racing ahead of TTS). This is driven by LiveKit Agents' `TranscriptSynchronizer`, which paces text emission against ElevenLabs playback. The agent opts in explicitly via `RoomOptions(text_output=TextOutputOptions(sync_transcription=True))` in `agent/main.py` — that matches the LiveKit default but is set explicitly so the streaming behavior is locked in even if defaults change. On the web side, `web/components/useVoiceSession.ts` listens to `RoomEvent.TranscriptionReceived` and updates each segment in place by `id`, which is what enables the progressive reveal.
+
+## Production deploy
+
+The demo is deployed at <https://insead-voicebot.roelconijn.nl> on a Hetzner VPS behind shared Caddy. Three containers (`insead-voicebot-web`, `insead-voicebot-agent`, `insead-voicebot-livekit`) plus open firewall ports for WebRTC media on 7881/tcp and 7882/udp. Hard cost cap of $20/month enforced in `web/lib/usage.ts` (token endpoint refuses to mint new tokens once tripped) plus a kill switch at `/api/admin?key=…&action=pause`.
+
+Full deploy procedure and gotchas in [`deploy/bootstrap.md`](deploy/bootstrap.md).
