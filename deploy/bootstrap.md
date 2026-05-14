@@ -8,12 +8,16 @@ Caddy: `insead-voicebot-livekit`, `insead-voicebot-web`, `insead-voicebot-agent`
 
 ### 1. DNS
 
-Add two A records at the registrar, both pointing to `178.104.235.137`:
+Add one A record at the registrar pointing to `178.104.235.137`:
 
-- `insead-voicebot.roelconijn.nl` (the web app)
-- `livekit.insead-voicebot.roelconijn.nl` (LiveKit WSS signaling)
+- `insead-voicebot.roelconijn.nl`
 
-Wait for them to resolve before continuing (`dig insead-voicebot.roelconijn.nl`).
+Caddy routes `/rtc` and `/twirp/*` to the LiveKit container and everything
+else to the Next.js container, so the page and the WebSocket share the same
+host (and the same TLS connection via HTTP/2 — saves a handshake on session
+start).
+
+Wait for it to resolve before continuing (`dig insead-voicebot.roelconijn.nl`).
 
 ### 2. Firewall — open the LiveKit media ports
 

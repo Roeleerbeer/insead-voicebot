@@ -1,5 +1,7 @@
 # Append this block to /root/infra/Caddyfile on the VPS, then reload Caddy.
-# Two subdomains: the Next.js app and the LiveKit WSS signaling.
+# One subdomain handles both the Next.js app and the LiveKit WSS signaling.
+# Browser reuses the same TLS connection for both via HTTP/2 coalescing,
+# saving a DNS lookup + TLS handshake on session start.
 # Direct UDP/TCP media on :7881 and :7882 bypass Caddy entirely (open them
 # at the firewall — see deploy/bootstrap.md).
 
@@ -9,26 +11,28 @@ insead-voicebot.roelconijn.nl {
     # Keep the demo out of search indexes.
     header X-Robots-Tag "noindex, nofollow, noarchive"
 
+    # Cheap health check (bypasses both upstreams).
     respond /healthz 200
 
-    reverse_proxy insead-voicebot-web:3000 {
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Real-IP {remote_host}
+    # LiveKit signaling lives at /rtc (WebSocket) and /twirp/* (REST).
+    # Long-lived WebSocket sessions need timeouts lifted on this upstream.
+    @livekit path /rtc /rtc/* /twirp /twirp/*
+    handle @livekit {
+        reverse_proxy insead-voicebot-livekit:7880 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+            transport http {
+                read_timeout 0
+                write_timeout 0
+            }
+        }
     }
-}
 
-livekit.insead-voicebot.roelconijn.nl {
-    encode zstd gzip
-
-    # LiveKit signaling: WebSocket upgrade + Twirp REST. The reverse_proxy
-    # handles the Upgrade header automatically.
-    reverse_proxy insead-voicebot-livekit:7880 {
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Real-IP {remote_host}
-        # WebSocket sessions are long-lived; lift timeouts.
-        transport http {
-            read_timeout 0
-            write_timeout 0
+    # Everything else goes to the Next.js container.
+    handle {
+        reverse_proxy insead-voicebot-web:3000 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
         }
     }
 }
