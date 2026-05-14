@@ -42,6 +42,14 @@ export function useAudioAnalyser(
     const freq = new Uint8Array(analyser.frequencyBinCount);
     const step = Math.max(1, Math.floor(freq.length / N_BANDS));
 
+    // Per-stream auto-normalization. Mic RMS (with AGC) and TTS playback RMS
+    // are very different absolute levels; without this the orb modulates much
+    // harder for one source than the other. Track a slowly-decaying running
+    // peak and divide by it so loud moments map to ~1 regardless of source.
+    let runningPeak = 0.2;
+    const PEAK_DECAY = 0.9985; // ~7s half-life @ 60fps
+    const PEAK_FLOOR = 0.05;
+
     const tick = () => {
       if (cancelled) return;
       analyser.getByteTimeDomainData(time);
@@ -51,7 +59,9 @@ export function useAudioAnalyser(
         const v = (time[i] - 128) / 128;
         sum += v * v;
       }
-      const amplitude = Math.min(1, Math.sqrt(sum / time.length) * 2.5);
+      const rms = Math.sqrt(sum / time.length);
+      runningPeak = Math.max(runningPeak * PEAK_DECAY, rms);
+      const amplitude = Math.min(1, rms / Math.max(runningPeak, PEAK_FLOOR));
       const bands = new Array(N_BANDS);
       for (let i = 0; i < N_BANDS; i++) bands[i] = freq[i * step] / 255;
       setData({ amplitude, bands });

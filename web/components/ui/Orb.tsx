@@ -120,10 +120,13 @@ export default function Orb({
         buttonRef.current.style.transform = `scale(${breathScale})`;
       }
 
-      // Amplitude-modulated filter/halo/ring params (gentler — smaller per-frame deltas)
-      const scale = b.scale + amp * 14;
-      const glow = Math.min(1, b.glow + amp * 0.35);
-      const strokeBoost = 1 + amp * 0.35;
+      // Amplitude-modulated filter/halo/ring params. Multipliers scale up with
+      // real-audio intensity so the orb is calm while waiting but energetic
+      // when someone is actually talking.
+      const intensity = 1 - breathFactor; // 0 waiting → 1 talking
+      const scale = b.scale + amp * (14 + intensity * 26);
+      const glow = Math.min(1, b.glow + amp * (0.35 + intensity * 0.35));
+      const strokeBoost = 1 + amp * (0.35 + intensity * 0.65);
 
       // 1. Displacement scale (drives the wispy distortion)
       dispRef.current?.setAttribute("scale", String(scale));
