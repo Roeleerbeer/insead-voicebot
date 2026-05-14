@@ -23,7 +23,11 @@ function detectUnsupported(): string | null {
   return null;
 }
 
-export default function App() {
+type Props = {
+  businessCaseHtml: string;
+};
+
+export default function App({ businessCaseHtml }: Props) {
   const [route, setRoute] = useState<Route>("voice");
   const [unsupported, setUnsupported] = useState<string | null>(null);
   const session = useVoiceSession();
@@ -76,7 +80,7 @@ export default function App() {
           />
         </div>
         <div className={`screen ${route === "case" ? "is-active" : ""}`}>
-          <BusinessCase onAskResona={askResona} />
+          <BusinessCase html={businessCaseHtml} onAskResona={askResona} />
         </div>
         <div className={`screen ${route === "tech" ? "is-active" : ""}`}>
           <TechStack onAskResona={askResona} />
