@@ -11,16 +11,19 @@ insead-voicebot.roelconijn.nl {
     # Keep the demo out of search indexes.
     header X-Robots-Tag "noindex, nofollow, noarchive"
 
-    # Cheap health check (bypasses both upstreams).
-    respond /healthz 200
+    # All three routes use `handle` blocks so Caddy orders them by path
+    # specificity (most specific first). Bare `respond` would be auto-moved
+    # to the end of the directive order by Caddy and never match.
+    @healthz path /healthz
+    handle @healthz {
+        respond 200
+    }
 
-    # LiveKit signaling lives at /rtc (WebSocket) and /twirp/* (REST).
-    # Long-lived WebSocket sessions need timeouts lifted on this upstream.
+    # LiveKit signaling: WebSocket at /rtc, REST at /twirp/*. Long-lived
+    # WebSocket sessions need timeouts lifted on this upstream.
     @livekit path /rtc /rtc/* /twirp /twirp/*
     handle @livekit {
         reverse_proxy insead-voicebot-livekit:7880 {
-            header_up X-Forwarded-Proto {scheme}
-            header_up X-Real-IP {remote_host}
             transport http {
                 read_timeout 0
                 write_timeout 0
@@ -28,11 +31,8 @@ insead-voicebot.roelconijn.nl {
         }
     }
 
-    # Everything else goes to the Next.js container.
+    # Catch-all: Next.js app.
     handle {
-        reverse_proxy insead-voicebot-web:3000 {
-            header_up X-Forwarded-Proto {scheme}
-            header_up X-Real-IP {remote_host}
-        }
+        reverse_proxy insead-voicebot-web:3000
     }
 }

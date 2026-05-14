@@ -10,8 +10,12 @@ WORKDIR /app/web
 # better-sqlite3 + sharp build natively on first install; alpine needs these.
 RUN apk add --no-cache python3 make g++
 RUN corepack enable
-COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml web/.npmrc ./
+# pnpm 11 blocks native post-install scripts by default and the allowlist
+# configs don't reliably work in CI/container. Install without scripts, then
+# rebuild the one native dep we actually need.
+RUN pnpm install --frozen-lockfile --ignore-scripts \
+ && pnpm rebuild better-sqlite3
 
 # --- builder ----------------------------------------------------------------
 FROM node:22-alpine AS builder
@@ -26,17 +30,18 @@ RUN pnpm build
 
 # --- runtime ----------------------------------------------------------------
 FROM node:22-alpine AS runtime
-WORKDIR /app/web
+WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    AGENT_CONTENT_DIR=/app/agent/content
 
-# Standalone output already includes a minimal node_modules; copy it plus
-# the static assets and the agent/content/ markdown the server reads.
-COPY --from=builder /app/web/.next/standalone /app
+# Standalone output: server.js + minimal node_modules at the standalone root,
+# static/public next to .next/, markdown next to the app.
+COPY --from=builder /app/web/.next/standalone ./
 COPY --from=builder /app/web/.next/static ./.next/static
 COPY --from=builder /app/web/public ./public
-COPY --from=builder /app/agent/content /app/agent/content
+COPY --from=builder /app/agent/content ./agent/content
 
 EXPOSE 3000
 CMD ["node", "server.js"]
